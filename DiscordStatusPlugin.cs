@@ -3,35 +3,56 @@ using System;
 using Discord;
 using System.Threading;
 
-[assembly: MelonInfo(typeof(DiscordStatus.DiscordStatusPlugin), "Discord Status", "1.0.0", "SlidyDev")]
+[assembly: MelonInfo(typeof(DiscordStatus.DiscordStatusPlugin), "Discord Status for 20MTD", "1.0.0", "SlidyDev (forked by samk0)")]
 [assembly: MelonColor(ConsoleColor.DarkCyan)]
+[assembly: MelonGame(null, null)]
 
 namespace DiscordStatus
 {
-    public class DiscordStatusPlugin : MelonPlugin
+    public class DiscordStatusPlugin : MelonMod
     {
-        public const long AppId = 977473789854089226;
+        public const long AppId = 991695489370173490;
         public Discord.Discord discordClient;
         public ActivityManager activityManager;
+        public string genericStateDisplay = "v. 1.0.0";
 
         private bool gameClosing;
         public bool GameStarted { get; private set; }
         public long gameStartedTime;
 
-        public override void OnPreInitialization()
+        public override void OnApplicationStart()
         {
             DiscordLibraryLoader.LoadLibrary();
             InitializeDiscord();
-            UpdateActivity();
+            //UpdateActivity();
             new Thread(DiscordLoopThread).Start();
+        }
+
+        public override void OnSceneWasInitialized(int buildIndex, string sceneName)
+        {
+            string details = "loading";
+
+            switch(sceneName)
+            {
+                case "TitleScreen":
+                    details = "In Menu";
+                    break;
+
+                case "Battle":
+                    details = "Surviving";
+                    break;
+
+            }
+
+            UpdateActivity(details, genericStateDisplay);
         }
 
         public override void OnApplicationLateStart()
         {
             GameStarted = true;
-            gameStartedTime = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+            gameStartedTime = getTimestamp();
 
-            UpdateActivity();
+           // UpdateActivity();
         }
 
         public override void OnApplicationQuit()
@@ -78,23 +99,22 @@ namespace DiscordStatus
             }
         }
 
-        public void UpdateActivity()
+        public void UpdateActivity(string details, string state)
         {
             var activity = new Activity
             {
-                Details = $"Playing {MelonUtils.CurrentGameAttribute.Name}"
+                Details = details
             };
 
-            activity.Assets.LargeImage = "ml_icon";
-            activity.Name = $"MelonLoader {BuildInfo.Version}";
+            activity.Assets.LargeImage = "lilith";
+            activity.Name = $"20MTD";
             activity.Instance = true;
             activity.Assets.LargeText = activity.Name;
-
-            var modsCount = MelonHandler.Mods.Count;
-            activity.State = GameStarted ? $"{modsCount} {(modsCount == 1 ? "Mod" : "Mods")} Loaded" : "Loading MelonLoader";
+       
+            activity.State = state;
 
             if (GameStarted)
-                activity.Timestamps.Start = gameStartedTime;
+                activity.Timestamps.Start = getTimestamp();
 
             activityManager.UpdateActivity(activity, ResultHandler);
         }
@@ -102,6 +122,11 @@ namespace DiscordStatus
         public void ResultHandler(Result result)
         {
 
+        }
+
+        public long getTimestamp()
+        {
+            return (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
         }
     }
 }
